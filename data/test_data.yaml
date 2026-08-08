@@ -1,0 +1,16 @@
+login:
+  valid:
+    username: "preprod"
+    password: "Password@123"
+
+shift:
+  clock_in_pin: "1234"
+
+# MSA/tobacco products generated via khub-web-tests'
+# scripts/create_general_test_data_api.py --env=preprod --msa
+tobacco_products:
+  product_1_upc: "4210691878"
+  product_2_upc: "2194227147"
+  age_verification_dob: ["01", "01", "1990"]
+
+discount_percent: "10"

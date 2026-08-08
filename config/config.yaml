@@ -1,0 +1,46 @@
+default_environment: emulator
+
+# Backend REST API credentials — used to look up data the POS UI itself never
+# surfaces (e.g. the order number after checkout), so tests can act on the
+# exact record they created instead of guessing from a shared, constantly
+# changing tenant dataset. Must match whichever tenant the `preprod` login
+# in data/test_data.yaml points at (NOT khub-web-tests' automation_preprod
+# tenant — that's a different tenant's catalog, see README troubleshooting).
+backend_api:
+  preprod:
+    url: https://preprod.ikhub.biz
+    username: preprod
+    password: Password@123
+
+environments:
+  # Runs against the local Pixel_Tablet AVD already created in Android Studio.
+  emulator:
+    platform_name: Android
+    automation_name: UiAutomator2
+    device_name: emulator-5554
+    platform_version: "15"
+    app_package: com.anonymous.ititansapp
+    app_activity: .MainActivity
+    app_path: null                       # app already installed on the AVD; set to data/apk/app-release.apk for a fresh install
+    no_reset: true
+    full_reset: false
+    auto_grant_permissions: true
+    new_command_timeout: 180
+    appium_server: http://127.0.0.1:4723
+
+  # Runs against a physical tablet connected over USB with USB debugging enabled.
+  # Fill in udid/platform_version from `adb devices -l` and `adb shell getprop ro.build.version.release`.
+  real_device:
+    platform_name: Android
+    automation_name: UiAutomator2
+    device_name: KHUB_Tablet
+    udid: null                # TODO: e.g. "R58N30ABCDE"
+    platform_version: null    # TODO: e.g. "13"
+    app_package: com.anonymous.ititansapp
+    app_activity: .MainActivity
+    app_path: null            # leave null if the APK is already installed on the tablet
+    no_reset: true
+    full_reset: false
+    auto_grant_permissions: true
+    new_command_timeout: 180
+    appium_server: http://127.0.0.1:4723

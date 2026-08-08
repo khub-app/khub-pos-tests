@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+logs/
+screenshots/
+
+reports/allure-results/
+reports/allure-report/
+
+data/apk/*.apk
+
+.env
+.idea/
