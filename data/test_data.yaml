@@ -4,7 +4,7 @@ login:
     password: "Password@123"
 
 shift:
-  clock_in_pin: "1234"
+  clock_in_pin: "454545"
 
 # MSA/tobacco products generated via khub-web-tests'
 # scripts/create_general_test_data_api.py --env=preprod --msa

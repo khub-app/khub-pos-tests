@@ -1,3 +1,4 @@
+from locators.clockin_locators import ClockInLocators
 from locators.dashboard_locators import DashboardLocators
 from pages.base_page import BasePage
 from pages.clockin_page import ClockInPage
@@ -13,6 +14,12 @@ class DashboardPage(BasePage):
         return self.is_displayed(DashboardLocators.START_NEW_SALE, timeout)
 
     def open_time_clock(self) -> ClockInPage:
+        # The app auto-opens this modal right after login when the cashier
+        # isn't clocked in yet, in which case the Time Clock button itself is
+        # covered by the modal and un-clickable — nothing to tap.
+        if self.is_displayed(ClockInLocators.MODAL_TITLE, timeout=3):
+            logger.info("Clock-in modal already open (auto-shown after login)")
+            return ClockInPage(self.driver)
         logger.info("Opening Time Clock")
         self.click(DashboardLocators.TIME_CLOCK_BUTTON)
         return ClockInPage(self.driver)

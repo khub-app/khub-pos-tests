@@ -1,3 +1,4 @@
+from locators.clockin_locators import ClockInLocators
 from locators.login_locators import LoginLocators
 from pages.base_page import BasePage
 from utilities.logger import get_logger
@@ -28,4 +29,11 @@ class LoginPage(BasePage):
         self.click_login()
 
     def is_login_successful(self, timeout: int = 15) -> bool:
-        return self.is_displayed(LoginLocators.HOME_SCREEN_MARKER, timeout)
+        # The app auto-opens the "Clock in to your Account" modal right after
+        # login when the cashier isn't clocked in, which covers the dashboard's
+        # HOME_SCREEN_MARKER and makes it report as not displayed. Either the
+        # modal or the marker showing means login itself succeeded.
+        half = max(timeout // 2, 1)
+        if self.is_displayed(ClockInLocators.MODAL_TITLE, half):
+            return True
+        return self.is_displayed(LoginLocators.HOME_SCREEN_MARKER, half)
