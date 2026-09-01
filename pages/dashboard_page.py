@@ -4,13 +4,20 @@ from pages.base_page import BasePage
 from pages.clockin_page import ClockInPage
 from pages.sale_order_page import SaleOrderPage
 from pages.sales_history_page import SalesHistoryPage
+from pages.switch_user_page import SwitchUserPage
 from utilities.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class DashboardPage(BasePage):
-    def is_loaded(self, timeout: int = 15) -> bool:
+    def is_loaded(self, timeout: int = 45) -> bool:
+        # Bumped from 15s (then 30s - still not enough, confirmed live):
+        # the very first dashboard load after a fresh reset_app_data()
+        # cold-launches the RN bundle from scratch and can take well over
+        # 30s, though later tests in the same suite run (warm app) render
+        # in ~5-10s - not a locator regression, the same START_NEW_SALE
+        # check just needs enough headroom for the worst case.
         return self.is_displayed(DashboardLocators.START_NEW_SALE, timeout)
 
     def open_time_clock(self) -> ClockInPage:
@@ -36,3 +43,20 @@ class DashboardPage(BasePage):
         logger.info("Opening Sales History")
         self.click(DashboardLocators.SALES_HISTORY_BUTTON)
         return SalesHistoryPage(self.driver)
+
+    def open_switch_user(self) -> SwitchUserPage:
+        logger.info("Opening Switch user")
+        self.click(DashboardLocators.SWITCH_USER_BUTTON)
+        return SwitchUserPage(self.driver)
+
+    def is_admin_user(self, name: str, timeout: int = 15) -> bool:
+        return self.is_displayed(DashboardLocators.admin_status_badge(name), timeout)
+
+    def is_start_new_sale_enabled(self, timeout: int = 15) -> bool:
+        return self.is_enabled(DashboardLocators.START_NEW_SALE, timeout)
+
+    def is_product_enabled(self, timeout: int = 15) -> bool:
+        return self.is_enabled(DashboardLocators.PRODUCT_BUTTON, timeout)
+
+    def is_shift_open(self, timeout: int = 15) -> bool:
+        return self.is_displayed(DashboardLocators.SHIFT_OPEN_MARKER, timeout)

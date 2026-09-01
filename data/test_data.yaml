@@ -5,12 +5,21 @@ login:
 
 shift:
   clock_in_pin: "454545"
+  # Exact casing/text as displayed by the app's own user lists - not the
+  # capitalization used in informal references to these accounts.
+  clock_in_user: "Zeeshan pos"
+  switch_user: "Automation"
 
-# MSA/tobacco products generated via khub-web-tests'
-# scripts/create_general_test_data_api.py --env=preprod --msa
+# MSA/tobacco product creation now goes through ApiClient (fresh product per
+# run - static UPCs here went stale against the shared preprod catalog).
 tobacco_products:
-  product_1_upc: "4210691878"
-  product_2_upc: "2194227147"
   age_verification_dob: ["01", "01", "1990"]
 
 discount_percent: "10"
+
+# NMI test-mode card (never a real card) — approved unconditionally in NMI's
+# sandbox, used by the Split Payment scenario's card-entry step.
+test_card:
+  number: "4111 1111 1111 1111"
+  exp_date: "11/2034"
+  cvc: "123"

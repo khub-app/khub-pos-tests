@@ -1,4 +1,4 @@
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -18,7 +18,16 @@ class WaitHelper:
         self.timeout = timeout
 
     def _wait(self, timeout=None):
-        return WebDriverWait(self.driver, timeout or self.timeout, poll_frequency=POLL_FREQUENCY)
+        # StaleElementReferenceException is NOT one of Selenium's default
+        # ignored exceptions - without listing it here, a single stale
+        # uiautomator2 element-cache hit (confirmed live: recurs on this
+        # app's clock-in user list under load) raises immediately instead
+        # of being retried within the wait's own poll loop, even though
+        # the target element re-resolves fine a moment later.
+        return WebDriverWait(
+            self.driver, timeout or self.timeout, poll_frequency=POLL_FREQUENCY,
+            ignored_exceptions=(StaleElementReferenceException,),
+        )
 
     def wait_for_visible(self, locator, timeout=None):
         try:

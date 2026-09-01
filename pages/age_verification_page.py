@@ -6,7 +6,11 @@ logger = get_logger(__name__)
 
 
 class AgeVerificationPage(BasePage):
-    def is_shown(self, timeout: int = 15) -> bool:
+    def is_shown(self, timeout: int = 30) -> bool:
+        # Bumped from 15s: confirmed live this modal can take longer than
+        # that to appear under sustained emulator load (full-suite runs,
+        # not standalone) - not a locator regression, same MODAL_TITLE
+        # check just needs more headroom.
         return self.is_displayed(AgeVerificationLocators.MODAL_TITLE, timeout)
 
     def enter_dob(self, mm: str, dd: str, yyyy: str):

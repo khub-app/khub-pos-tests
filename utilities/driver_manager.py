@@ -72,6 +72,13 @@ class DriverManager:
         # This app takes 15-20s+ to report its first frame drawn on a loaded
         # emulator; Appium's 20s default adbExecTimeout is too tight for that.
         options.set_capability("adbExecTimeout", self.config.get("adb_exec_timeout", 60000))
+        # Needed for any test that drives the NMI card-entry webview (Split
+        # Payment's Credit/Debit Card flow): without it, switching into that
+        # webview context fails with "No Chromedriver found that can
+        # automate Chrome ...". Also requires the Appium server itself to be
+        # started with --allow-insecure uiautomator2:chromedriver_autodownload
+        # (see COMMANDS.md) - this capability alone is not sufficient.
+        options.set_capability("chromedriverAutodownload", True)
         # This app's checkout screens render landscape by default (matches
         # real POS tablet usage) — no orientation forcing needed. All
         # coordinate-based taps/swipes (search result rows, age-verification

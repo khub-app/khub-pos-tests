@@ -28,6 +28,13 @@ class SaleOrderLocators:
     GO_TO_MENU_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Go to Menu")')
     CASH_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Cash")
     CARD_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Card")
+    ADD_QUICK_CUSTOMER_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Add Quick Customer")')
+    MORE_OPTIONS_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("More Options")')
+    GUEST_CUSTOMER_MARKER = (AppiumBy.XPATH, '//*[@text="Guest Customer"]')
+
+    @staticmethod
+    def current_customer_name(name: str):
+        return (AppiumBy.XPATH, f'//*[@text="{name}"]')
 
     # The cart summary (Total Quantity / Sub Total / Total / Tax / Additional
     # Discount) lives in a bottom drawer that renders COLLAPSED by default —

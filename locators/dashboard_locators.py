@@ -10,3 +10,10 @@ class DashboardLocators:
     CLOCKED_IN_MARKER = (AppiumBy.ACCESSIBILITY_ID, "Clocked In")
     CLOCK_OUT_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Clock Out")
     SALES_HISTORY_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Sales History")')
+    SWITCH_USER_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Switch user")')
+    PRODUCT_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Product")
+    SHIFT_OPEN_MARKER = (AppiumBy.XPATH, '//*[@text="SHIFT: Open"]')
+
+    @staticmethod
+    def admin_status_badge(name: str):
+        return (AppiumBy.XPATH, f'//*[@text="ADMIN: {name}"]')

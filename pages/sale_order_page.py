@@ -36,6 +36,14 @@ class SaleOrderPage(BasePage):
                 field = self.wait.wait_for_visible(SaleOrderLocators.SEARCH_PRODUCTS_FIELD)
                 field.click()
                 field.send_keys(query)
+                # tap_first_result() is a fixed-coordinate tap - confirmed
+                # live via page-source dump that a still-open keyboard can
+                # intercept/absorb that tap (the search field's results
+                # stay on screen, untouched, exactly as if nothing was
+                # tapped at all) even though the row's bounds don't
+                # visually overlap the keyboard. Dismiss it here so the
+                # coordinate tap reliably reaches the row underneath.
+                self.hide_keyboard()
                 return self
             except (InvalidElementStateException, StaleElementReferenceException) as e:
                 last_exc = e
@@ -113,3 +121,23 @@ class SaleOrderPage(BasePage):
         logger.info("Tapping Go to Menu")
         self.click(SaleOrderLocators.GO_TO_MENU_BUTTON)
         return DashboardPage(self.driver)
+
+    def is_guest_customer(self, timeout: int = 10) -> bool:
+        return self.is_displayed(SaleOrderLocators.GUEST_CUSTOMER_MARKER, timeout)
+
+    def is_customer_selected(self, name: str, timeout: int = 10) -> bool:
+        return self.is_displayed(SaleOrderLocators.current_customer_name(name), timeout)
+
+    def open_add_quick_customer(self):
+        from pages.add_customer_page import AddCustomerPage
+
+        logger.info("Opening Add Quick Customer")
+        self.click(SaleOrderLocators.ADD_QUICK_CUSTOMER_BUTTON)
+        return AddCustomerPage(self.driver)
+
+    def open_more_options(self):
+        from pages.more_options_page import MoreOptionsPage
+
+        logger.info("Opening More Options")
+        self.click(SaleOrderLocators.MORE_OPTIONS_BUTTON)
+        return MoreOptionsPage(self.driver)

@@ -1,3 +1,5 @@
+import time
+
 from appium.webdriver.common.appiumby import AppiumBy
 
 from utilities.logger import get_logger
@@ -40,6 +42,10 @@ class BasePage:
         except Exception:
             return False
 
+    def is_enabled(self, locator, timeout=None) -> bool:
+        element = self.wait.wait_for_visible(locator, timeout)
+        return element.get_attribute("enabled") == "true"
+
     # --- mobile gestures -------------------------------------------------------
     def hide_keyboard(self):
         try:
@@ -81,3 +87,22 @@ class BasePage:
 
     def take_screenshot(self, name: str) -> str:
         return take_screenshot(self.driver, name)
+
+    def dismiss_system_anr_if_present(self, max_attempts: int = 3):
+        """The app's newer USB-printer/Sunmi-external-display hardware
+        detection on the login screen occasionally trips Android's own
+        "System UI isn't responding" ANR watchdog on a cold launch
+        (confirmed live against the 2026-08-20 APK build: a native
+        SystemUI dialog, not app UI, that covers and blocks all
+        interaction until dismissed - the app's own elements are entirely
+        absent from the tree while it's up). Tapping "Wait" lets the
+        system recover rather than force-closing anything. No-op if it
+        never appears."""
+        anr_title = (AppiumBy.XPATH, '//*[@text="System UI isn\'t responding"]')
+        wait_button = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().resourceId("android:id/aerr_wait")')
+        for attempt in range(max_attempts):
+            if not self.is_displayed(anr_title, timeout=3):
+                return
+            logger.info(f"System UI ANR dialog present, tapping Wait (attempt {attempt + 1}/{max_attempts})")
+            self.click(wait_button)
+            time.sleep(8)
