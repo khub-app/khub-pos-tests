@@ -19,9 +19,9 @@ environments:
     automation_name: UiAutomator2
     device_name: emulator-5554
     platform_version: "15"
-    app_package: com.anonymous.ititansapp
+    app_package: com.khub.retailpos      # renamed from com.anonymous.ititansapp in the Sep-9 build
     app_activity: .MainActivity
-    app_path: null                       # app already installed on the AVD; set to data/apk/app-release.apk for a fresh install
+    app_path: data/apk/app-release.apk   # Appium auto-installs this if the app is missing/outdated on the AVD (drop the APK here — it's gitignored)
     no_reset: true
     full_reset: false
     auto_grant_permissions: true
@@ -36,7 +36,7 @@ environments:
     device_name: KHUB_Tablet
     udid: null                # TODO: e.g. "R58N30ABCDE"
     platform_version: null    # TODO: e.g. "13"
-    app_package: com.anonymous.ititansapp
+    app_package: com.khub.retailpos      # renamed from com.anonymous.ititansapp in the Sep-9 build
     app_activity: .MainActivity
     app_path: null            # leave null if the APK is already installed on the tablet
     no_reset: true

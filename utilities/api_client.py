@@ -1,10 +1,9 @@
 import random
-import string
-from datetime import datetime
 
 import requests
 
 from config.config_reader import ConfigReader
+from utilities import test_data_names as names
 from utilities.logger import get_logger
 
 logger = get_logger(__name__)
@@ -71,19 +70,23 @@ class ApiClient:
 
     # ── Test-data creation (ported from khub-web-tests' create_general_test_data_api.py) ──
 
-    # Real MSA/tobacco reporting category — id and `code` ("003293") confirmed
-    # live against preprod. MSA product creation requires an existing category
+    # Real MSA/tobacco reporting category — id and `code` confirmed live
+    # against preprod. MSA product creation requires an existing category
     # whose `code` is a real MSA taxonomy code (a regulatory reporting value,
     # not something a test can invent), so this is deliberately NOT created
     # fresh per run like the plain category below - it's a fixed, shared,
     # pre-established category, matched by the existing Sale Order test's own
     # tobacco products.
-    EXISTING_MSA_CATEGORY = {"id": 21, "code": "003293", "name": "Tobacco Derived Products"}
+    #
+    # id=21 ("Tobacco Derived Products", code 003293) went stale when the
+    # preprod catalog was reseeded alongside the Sep-9 com.khub.retailpos
+    # build - id 21 now resolves to an unrelated, non-MSA category
+    # ("CBD/Hemp/Kratom/NonTobacco"). Re-confirmed live 2026-09-15 by
+    # scanning /tenant/api/v1/catalog/categories/<id> for is_msa_compliant.
+    EXISTING_MSA_CATEGORY = {"id": 1, "code": "003231", "name": "T-Cigarettes"}
 
-    def create_category(self, is_msa_compliant: bool = False) -> dict:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        prefix = "AutoPOS_Tobacco_Cat" if is_msa_compliant else "AutoPOS_Cat"
-        name = f"{prefix}_{ts}"
+    def create_category(self, is_msa_compliant: bool = False, tag: str | None = None) -> dict:
+        name, _ = names.category_name("pos", msa=is_msa_compliant, tag=tag)
         resp = self.session.post(
             self.config["url"] + "/tenant/api/v1/catalog/categories",
             json={
@@ -130,6 +133,7 @@ class ApiClient:
         is_msa_compliant: bool = False,
         price: float = 25.00,
         msa_category_code: str | None = None,
+        tag: str | None = None,
     ) -> dict:
         """Creates one product with `price`, in one channel's stock (in_hand=100
         per channel), ready to sell through the POS immediately.
@@ -142,9 +146,7 @@ class ApiClient:
         matching `category_id`'s own `code`."""
         if is_msa_compliant and not msa_category_code:
             raise ValueError("msa_category_code is required when is_msa_compliant=True")
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        prefix = "AutoPOS_Tobacco_Prod" if is_msa_compliant else "AutoPOS_Prod"
-        name = f"{prefix}_{ts}"
+        name, _ = names.product_name("pos", msa=is_msa_compliant, tag=tag)
         upc = str(random.randint(1_000_000_000, 9_999_999_999))
 
         unit_price = {
@@ -198,7 +200,7 @@ class ApiClient:
         payload = {
             "name": name,
             "brand_id": None,
-            "slug": name,
+            "slug": names.slugify(name),
             "auto_generate_sku": True,
             "auto_fetch_img": False,
             "is_tax_applicable": True,
@@ -270,11 +272,9 @@ class ApiClient:
         logger.info(f"Created product '{name}' (id={product_id}, upc={upc}, price=${price})")
         return {"id": product_id, "name": name, "upc": upc, "price": price}
 
-    def create_customer(self) -> dict:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        name = f"AutoPOS_Cust_{ts}"
-        suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=4))
-        email = f"autopos_{ts}_{suffix}@example.com"
+    def create_customer(self, tag: str | None = None) -> dict:
+        name, _ = names.customer_name("pos", tag=tag)
+        email = names.customer_email(name)
         phone = f"+1 (555) {random.randint(100, 999)}-{random.randint(1000, 9999)}"
         phone_digits = phone.replace("+", "").replace(" ", "").replace("(", "").replace(")", "").replace("-", "")
 

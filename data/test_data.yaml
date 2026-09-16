@@ -4,10 +4,15 @@ login:
     password: "Password@123"
 
 shift:
-  clock_in_pin: "454545"
+  clock_in_pin: "123456"
   # Exact casing/text as displayed by the app's own user lists - not the
   # capitalization used in informal references to these accounts.
-  clock_in_user: "Zeeshan pos"
+  # New build (Sep-9, com.khub.retailpos): "Zeeshan pos" no longer exists in
+  # the employee list; a new employee was created for this instead. The
+  # clock-in modal shows this account's FULL name ("Automation Automation")
+  # while the switch-user modal shows the same account by its SHORT name
+  # ("Automation") — confirmed live, these are not interchangeable.
+  clock_in_user: "Automation Automation"
   switch_user: "Automation"
 
 # MSA/tobacco product creation now goes through ApiClient (fresh product per

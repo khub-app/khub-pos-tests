@@ -263,6 +263,12 @@ assert order["status"] == "paid"
 
 The API credentials come from `config.yaml` under `backend_api.preprod`.
 
+Generated records (customers/products/categories) are named by
+`utilities/test_data_names.py` — a realistic wholesale-business / grocery-product
+name plus a `QA-<YYMMDD>-<HHMMSS>-<rand>` tag so each is human-readable, obviously
+automation, and unique per run. That module is kept **byte-identical** in
+`khub-mobileApp-tests` and `khub-Ecom-tests`; change all three together.
+
 ---
 
 ## What Is Automated
