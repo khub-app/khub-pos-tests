@@ -25,6 +25,16 @@ class SaleReturnPage(BasePage):
         self.click(SaleReturnScreenLocators.AUTO_FILL_LINK)
         return self
 
+    def increase_return_quantity(self):
+        logger.info("Tapping Increase return quantity")
+        self.click(SaleReturnScreenLocators.INCREASE_RETURN_QTY_BUTTON)
+        return self
+
+    def decrease_return_quantity(self):
+        logger.info("Tapping Decrease return quantity")
+        self.click(SaleReturnScreenLocators.DECREASE_RETURN_QTY_BUTTON)
+        return self
+
     def submit_return(self) -> ReturnPaymentPage:
         logger.info("Tapping Return")
         self.click(SaleReturnScreenLocators.RETURN_BUTTON)

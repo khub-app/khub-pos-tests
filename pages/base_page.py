@@ -88,6 +88,22 @@ class BasePage:
     def take_screenshot(self, name: str) -> str:
         return take_screenshot(self.driver, name)
 
+    def dismiss_immersive_mode_hint_if_present(self, timeout: int = 5):
+        """Android's one-time "Viewing full screen / To exit, swipe down..."
+        immersive-mode confirmation (a native SystemUI overlay, package=
+        "android", NOT app UI) started appearing on cold launch with the
+        2026-10-19 (v1.1.0) build - confirmed live via `adb exec-out
+        uiautomator dump`, which showed `resource-id="android:id/ok"` /
+        text="Got it" on the overlay; Appium's own `page_source` returned
+        ZERO elements at all while this overlay was up (not just the
+        app's), unlike the ANR dialog below where the app's tree is simply
+        absent - so this must be checked, and dismissed, before touching
+        any app element. No-op if it never appears."""
+        got_it = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().resourceId("android:id/ok")')
+        if self.is_displayed(got_it, timeout=timeout):
+            logger.info("Dismissing Android's immersive-mode 'Got it' hint")
+            self.click(got_it)
+
     def dismiss_system_anr_if_present(self, max_attempts: int = 3):
         """The app's newer USB-printer/Sunmi-external-display hardware
         detection on the login screen occasionally trips Android's own

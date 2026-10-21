@@ -7,13 +7,16 @@ shift:
   clock_in_pin: "123456"
   # Exact casing/text as displayed by the app's own user lists - not the
   # capitalization used in informal references to these accounts.
-  # New build (Sep-9, com.khub.retailpos): "Zeeshan pos" no longer exists in
-  # the employee list; a new employee was created for this instead. The
-  # clock-in modal shows this account's FULL name ("Automation Automation")
-  # while the switch-user modal shows the same account by its SHORT name
-  # ("Automation") — confirmed live, these are not interchangeable.
-  clock_in_user: "Automation Automation"
-  switch_user: "Automation"
+  # v1.1.0 build (Oct-19, com.khub.retailpos versionCode 5): the preprod
+  # employee list was reseeded again - "Automation Automation" is gone, only
+  # "Test Tester" was left. A fresh employee was created to replace it;
+  # its clock-in-modal display name is "ZeePOS MohPOS" (NOT the "zeePOS"
+  # shorthand it was described as - confirmed live via content-desc dump).
+  # Re-verify switch_user live before trusting it - the Sep-9 build showed
+  # the SAME account under a different short name on the switch-user screen
+  # vs. the clock-in screen.
+  clock_in_user: "ZeePOS MohPOS"
+  switch_user: "zeepos"
 
 # MSA/tobacco product creation now goes through ApiClient (fresh product per
 # run - static UPCs here went stale against the shared preprod catalog).

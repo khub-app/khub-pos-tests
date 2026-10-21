@@ -45,6 +45,16 @@ class SaleReturnScreenLocators:
     TOTAL_QUANTITY_VALUE = (AppiumBy.XPATH, '//*[@text="Total Quantity"]/following-sibling::*[1]')
     TOTAL_TO_REFUND_VALUE = (AppiumBy.XPATH, '//*[@text="Total to refund"]/following-sibling::*[1]')
 
+    # Per-line return-quantity stepper (+/-), confirmed live 2026-10-20 to
+    # have real content-desc (unlike the cart's own qty stepper, which
+    # needed coordinate taps) - only valid for the first/only product line.
+    # Tapping Increase ONCE (not Auto Fill, which jumps to max) is how a
+    # partial return is selected - confirmed to scale Total Quantity/Total
+    # to refund correctly (Ordered Qty 2, one tap -> Total Quantity 1,
+    # Total to refund = 1x unit price, not 2x).
+    INCREASE_RETURN_QTY_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Increase return quantity")')
+    DECREASE_RETURN_QTY_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Decrease return quantity")')
+
     @staticmethod
     def modal_title(order_no: str):
         return (AppiumBy.XPATH, f'//*[@text="Sales Return · {order_no}"]')

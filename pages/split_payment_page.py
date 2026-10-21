@@ -1,3 +1,5 @@
+import time
+
 from locators.sale_order_locators import ReceiptPromptLocators
 from locators.split_payment_locators import SplitPaymentLocators
 from pages.base_page import BasePage
@@ -116,7 +118,16 @@ class SplitPaymentPage(BasePage):
     def dismiss_receipt_prompt(self):
         """Reuses the same No Receipt locator as the direct (non-split)
         cash flow's CashPaymentPage - confirmed live this is the identical
-        element/behavior regardless of which payment flow reached it."""
+        element/behavior regardless of which payment flow reached it.
+
+        Unlike the plain-cash flow, completing a split cash+card payment
+        comes right after the NMI webview round-trip - confirmed live
+        2026-10-19 this can leave the app mid-transition for a moment
+        (same class of issue as EditOrderPage.set_order_date_to_today's
+        calendar) such that clicking No Receipt immediately times out even
+        though it renders fine shortly after. A short settle delay first
+        fixes it."""
         logger.info("Dismissing receipt prompt with No Receipt")
+        time.sleep(3)
         self.click(ReceiptPromptLocators.NO_RECEIPT_BUTTON)
         return self

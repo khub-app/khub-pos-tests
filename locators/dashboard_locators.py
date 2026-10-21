@@ -13,6 +13,10 @@ class DashboardLocators:
     SWITCH_USER_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Switch user")')
     PRODUCT_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Product")
     SHIFT_OPEN_MARKER = (AppiumBy.XPATH, '//*[@text="SHIFT: Open"]')
+    HOLD_RESUME_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Hold / Resume")')
+    LOCK_SCREEN_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Lock Screen")')
+    CASH_IN_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Cash In")')
+    CASH_OUT_BUTTON = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Cash Out")')
 
     @staticmethod
     def admin_status_badge(name: str):

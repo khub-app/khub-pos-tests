@@ -22,13 +22,13 @@ def _money(value: float) -> Decimal:
 @allure.story("Edit Order (known backend limitation)")
 class TestEditOrder(POSBaseSetup):
     """
-    KNOWN ISSUE (documented 2026-08-20): saving an edited order (a changed
-    Sale Price/Unit, with the also-required Order date set) consistently
-    fails with a native "This order has no channel id. Cannot save."
-    dialog - confirmed live that orders created via the walk-in cash-sale
-    flow never get a channel_id set, and the Edit Order screen exposes no
-    Channel field/control to supply one itself. Everything up to Save
-    works correctly: the price EditText accepts input, totals (Subtotal)
+    KNOWN ISSUE (documented 2026-08-20, re-confirmed 2026-10-19): saving an
+    edited order (a changed Sale Price/Unit, with the also-required Order
+    date set) consistently fails. The ORIGINAL "This order has no channel
+    id. Cannot save." error is gone as of the Oct-19 v1.1.0 build - that
+    bug looks fixed - but Save now fails with a different, generic error:
+    "Request failed with status code 404". Everything up to Save works
+    correctly: the price EditText accepts input, totals (Subtotal)
     recalculate live, and the date picker's required-field validation
     clears once a date is set.
 
@@ -136,12 +136,12 @@ class TestEditOrder(POSBaseSetup):
         with allure.step("Step 4: Attempt to save"):
             self.edit_order.save()
 
-    @allure.title("Verify Known Missing-Channel Error")
+    @allure.title("Verify Known Save Failure")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_07_verify_known_error(self):
-        with allure.step("Step 5 (KNOWN ISSUE): backend currently rejects the save with a missing-channel error"):
+        with allure.step("Step 5 (KNOWN ISSUE): backend currently rejects the save with a 404 error"):
             assert self.edit_order.is_no_channel_error_shown(), (
-                "Expected the known 'This order has no channel id. Cannot save.' failure, but it did not "
+                "Expected the known 'Request failed with status code 404' failure, but it did not "
                 "appear - the backend issue may be FIXED. If so, update this test to assert a successful "
                 "save instead."
             )

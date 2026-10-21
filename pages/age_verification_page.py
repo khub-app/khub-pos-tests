@@ -52,6 +52,26 @@ class AgeVerificationPage(BasePage):
         self.click(AgeVerificationLocators.CONFIRM_AND_PROCEED_BUTTON)
         return self
 
+    def is_verified(self, timeout: int = 5) -> bool:
+        return self.is_displayed(AgeVerificationLocators.VERIFIED_LABEL, timeout)
+
+    def is_confirm_and_proceed_enabled(self) -> bool:
+        return self.is_enabled(AgeVerificationLocators.CONFIRM_AND_PROCEED_BUTTON)
+
+    def is_blocked_for_age(self, timeout: int = 5) -> bool:
+        """True when verification failed - "Confirm & Proceed" is ABSENT
+        entirely in this case (not just disabled), replaced by "Below
+        required age" / "Remove Restricted Items"."""
+        return self.is_displayed(AgeVerificationLocators.BELOW_REQUIRED_AGE_LABEL, timeout)
+
+    def remove_restricted_items(self):
+        """Dismisses the blocked-state modal by removing the restricted
+        item it was never allowed to add - the only way out of this state
+        (there is no separate close/cancel)."""
+        logger.info("Tapping Remove Restricted Items")
+        self.click(AgeVerificationLocators.REMOVE_RESTRICTED_ITEMS_BUTTON)
+        return self
+
     def verify(self, mm: str, dd: str, yyyy: str):
         """Full verification flow: enter DOB, check age, confirm & proceed."""
         self.enter_dob(mm, dd, yyyy)

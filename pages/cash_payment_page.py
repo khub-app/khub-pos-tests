@@ -1,5 +1,6 @@
 from locators.sale_order_locators import CashPaymentLocators, ReceiptPromptLocators
 from pages.base_page import BasePage
+from utilities.currency import parse_currency
 from utilities.logger import get_logger
 
 logger = get_logger(__name__)
@@ -10,6 +11,19 @@ class CashPaymentPage(BasePage):
         """Never hardcode this — always read the live Amount Due so the
         test tracks whatever the cart/discount actually computed."""
         return self.find(CashPaymentLocators.AMOUNT_DUE_VALUE).text
+
+    def get_change_due(self) -> float:
+        """Only confirmed reliable for overpayment - see CHANGE_DUE_VALUE's
+        docstring."""
+        return parse_currency(self.find(CashPaymentLocators.CHANGE_DUE_VALUE).text)
+
+    def is_confirm_enabled(self) -> bool:
+        return self.is_enabled(CashPaymentLocators.CONFIRM_BUTTON)
+
+    def close_without_confirming(self):
+        logger.info("Closing cash payment modal via back button, without confirming")
+        self.driver.back()
+        return self
 
     def enter_amount(self, amount: str):
         """Cents-style entry, right-to-left, no decimal key on this pad —

@@ -58,23 +58,55 @@ class SaleOrderPage(BasePage):
         self.driver.execute_script("mobile: clickGesture", SaleOrderLocators.FIRST_RESULT_ROW_COORDS)
         return self
 
-    def add_product_by_upc(self, upc: str, dob: tuple[str, str, str] | None = None) -> bool:
+    def add_product_by_upc(self, upc: str, dob: tuple[str, str, str] | None = None, max_attempts: int = 3) -> bool:
         """Search + add a product by UPC. If age verification appears, `dob`
         (mm, dd, yyyy) must be provided to clear it; if it doesn't appear,
         `dob` is ignored. Returns whether age verification appeared, so
         callers/tests can assert on it explicitly rather than relying on the
-        ValueError-if-unhandled side effect alone."""
-        self.search_product(upc)
-        time.sleep(3)  # let the search results settle before tapping
-        self.tap_first_result()
+        ValueError-if-unhandled side effect alone.
 
-        age_verification = AgeVerificationPage(self.driver)
-        shown = age_verification.is_shown()
-        if shown:
-            if dob is None:
-                raise ValueError(f"Age verification appeared for UPC {upc} but no dob was provided")
-            age_verification.verify(*dob)
-        return shown
+        tap_first_result() is a coordinate tap (see its docstring - result
+        rows have no accessible node at all), and confirmed live 2026-10-19
+        that it can silently miss: the search results stay on screen
+        untouched (same screen, same query, same row) with the cart total
+        unchanged - no exception, nothing to catch, the row is simply never
+        actually added. Standalone repro scripts never hit this (small
+        sample luck), but it reproduced on every real pytest run of this
+        suite's second-product step. Verifying the cart's own product count
+        actually increased, and retrying the search+tap when it didn't, is
+        the fix - not a locator problem, there's no accessible element to
+        fix a locator for."""
+        before_qty = self._current_quantity()
+        for attempt in range(1, max_attempts + 1):
+            self.search_product(upc)
+            time.sleep(3)  # let the search results settle before tapping
+            self.tap_first_result()
+            time.sleep(2)  # let the add-to-cart + any UI transition settle
+
+            age_verification = AgeVerificationPage(self.driver)
+            shown = age_verification.is_shown()
+            if shown:
+                if dob is None:
+                    raise ValueError(f"Age verification appeared for UPC {upc} but no dob was provided")
+                age_verification.verify(*dob)
+
+            after_qty = self._current_quantity()
+            if after_qty > before_qty:
+                return shown
+            logger.warning(
+                f"Product {upc} did not register in the cart (qty {before_qty} -> {after_qty}) - "
+                f"retrying search+tap (attempt {attempt}/{max_attempts})"
+            )
+        raise RuntimeError(f"Product {upc} still not added to cart after {max_attempts} attempts")
+
+    def _current_quantity(self) -> int:
+        """Like get_total_quantity(), but tolerant of the drawer/value not
+        being there yet (returns 0) - used internally to verify an add
+        actually landed, before the cart necessarily has anything in it."""
+        self.expand_totals_drawer()
+        if not self.is_displayed(SaleOrderLocators.TOTAL_QUANTITY_VALUE, timeout=3):
+            return 0
+        return int(self.find(SaleOrderLocators.TOTAL_QUANTITY_VALUE).text)
 
     def expand_totals_drawer(self, attempts: int = 3):
         """The cart summary (Total Quantity / Sub Total / Total / etc.)
@@ -108,10 +140,58 @@ class SaleOrderPage(BasePage):
         self.click(SaleOrderLocators.ADDITIONAL_DISCOUNT_BUTTON)
         return DiscountPage(self.driver)
 
+    def open_park_order(self):
+        from locators.sale_order_locators import ParkOrderLocators
+        from pages.park_order_page import ParkOrderPage
+
+        logger.info("Opening Park Order")
+        self.click(ParkOrderLocators.TRIGGER)
+        return ParkOrderPage(self.driver)
+
     def tap_cash(self) -> CashPaymentPage:
         logger.info("Tapping Cash")
         self.click(SaleOrderLocators.CASH_BUTTON)
         return CashPaymentPage(self.driver)
+
+    def tap_cash_on_empty_cart(self):
+        """Like tap_cash(), but for the empty-cart negative case: the app
+        shows an error dialog instead of opening CashPaymentPage, so this
+        deliberately stays on SaleOrderPage rather than returning one."""
+        logger.info("Tapping Cash with an empty cart")
+        self.click(SaleOrderLocators.CASH_BUTTON)
+        return self
+
+    def is_add_products_first_error_shown(self, timeout: int = 5) -> bool:
+        return self.is_displayed(SaleOrderLocators.ADD_PRODUCTS_FIRST_ERROR_MESSAGE, timeout)
+
+    def dismiss_add_products_first_error(self):
+        logger.info("Dismissing 'Please add products to cart first' error")
+        self.click(SaleOrderLocators.ADD_PRODUCTS_FIRST_ERROR_OK_BUTTON)
+        return self
+
+    def tap_quantity_increment(self):
+        """Coordinate tap - see QUANTITY_INCREMENT_COORDS' docstring. Only
+        valid for the cart's first/only row."""
+        self.driver.execute_script("mobile: clickGesture", SaleOrderLocators.QUANTITY_INCREMENT_COORDS)
+        return self
+
+    def tap_quantity_decrement(self):
+        self.driver.execute_script("mobile: clickGesture", SaleOrderLocators.QUANTITY_DECREMENT_COORDS)
+        return self
+
+    def remove_product(self):
+        logger.info("Removing product")
+        self.click(SaleOrderLocators.REMOVE_PRODUCT_BUTTON)
+        return self
+
+    def empty_cart(self):
+        logger.info("Emptying cart")
+        self.click(SaleOrderLocators.EMPTY_CART_BUTTON)
+        self.click(SaleOrderLocators.EMPTY_CART_CONFIRM_BUTTON)
+        return self
+
+    def is_cart_empty(self, timeout: int = 10) -> bool:
+        return self.is_displayed(SaleOrderLocators.NO_PRODUCTS_IN_CART_MARKER, timeout)
 
     def go_to_menu(self):
         # Local import: dashboard_page imports SaleOrderPage at module level,

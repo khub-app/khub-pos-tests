@@ -16,6 +16,7 @@ class POSBaseSetup:
     1. Log in.
     2. Clock in the configured shift-owner user, unless already clocked in.
     3. Switch the active session to the configured automation user.
+    4. Start a shift for that user, unless one is already open.
 
     Mirrors BaseTest's structure (class-scoped autouse fixture, `self.driver`
     / `self.dashboard` available to every test method) - inherit from this
@@ -44,6 +45,9 @@ class POSBaseSetup:
         switch_user_page = dashboard.open_switch_user()
         switch_user_page.switch_to(switch_user, pin)
         assert dashboard.is_loaded(), "Dashboard did not load after switching users"
+
+        # Stage 4: start a shift for switch_user (skipped if already open)
+        dashboard.start_shift_if_needed()
 
         request.cls.driver = driver
         request.cls.dashboard = dashboard

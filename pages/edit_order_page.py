@@ -1,3 +1,5 @@
+import time
+
 from locators.sales_history_locators import EditOrderLocators
 from pages.base_page import BasePage
 from utilities.currency import parse_currency
@@ -18,6 +20,16 @@ class EditOrderPage(BasePage):
         picker is a custom calendar, not a native DatePickerDialog."""
         logger.info("Setting Order date to today")
         self.click(EditOrderLocators.ORDER_DATE_FIELD)
+        # Confirmed live 2026-10-19: clicking the "today" cell immediately
+        # after opening the calendar can time out at the full 60s even
+        # though the cell (content-desc "today <weekday> <date>") is
+        # genuinely present and clickable moments later - a live page-
+        # source dump taken 2s after opening found it fine. Not explained
+        # by a simple render delay (60s should be more than enough
+        # headroom for that); giving the calendar a moment to settle
+        # before searching fixes it, same "let results settle" pattern
+        # used elsewhere in this app (e.g. SaleOrderPage.search_product).
+        time.sleep(2)
         self.click(EditOrderLocators.DATE_PICKER_TODAY_CELL)
         return self
 

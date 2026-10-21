@@ -24,6 +24,7 @@ class LoginPage(BasePage):
         return self
 
     def login(self, username: str, password: str):
+        self.dismiss_immersive_mode_hint_if_present()
         self.dismiss_system_anr_if_present()
         self.enter_username(username)
         self.enter_password(password)

@@ -83,7 +83,14 @@ class ApiClient:
     # build - id 21 now resolves to an unrelated, non-MSA category
     # ("CBD/Hemp/Kratom/NonTobacco"). Re-confirmed live 2026-09-15 by
     # scanning /tenant/api/v1/catalog/categories/<id> for is_msa_compliant.
-    EXISTING_MSA_CATEGORY = {"id": 1, "code": "003231", "name": "T-Cigarettes"}
+    #
+    # id=1 ("T-Cigarettes", code 003231) went stale AGAIN when the catalog
+    # was reseeded once more alongside the Oct-19 v1.1.0 build - id 1 now
+    # resolves to an unrelated "Water Pipes" category. Re-confirmed live
+    # 2026-10-19 by the same category scan; every MSA category found had
+    # its own `age_threshold` field null (not the product-level field - see
+    # below), so there's no category-level value to match.
+    EXISTING_MSA_CATEGORY = {"id": 13, "code": "003231", "name": "Cigarettes"}
 
     def create_category(self, is_msa_compliant: bool = False, tag: str | None = None) -> dict:
         name, _ = names.category_name("pos", msa=is_msa_compliant, tag=tag)
@@ -258,6 +265,19 @@ class ApiClient:
             payload["msa_category_code"] = msa_category_code
         if msa_attributes is not None:
             payload["msa_attributes"] = msa_attributes
+        if is_msa_compliant:
+            # Newly required by the API - confirmed live against preprod
+            # 2026-10-19: omitting it 400s with "'age_threshold' is a
+            # required property". Only [18, 21] are accepted. Originally
+            # set to 21 here on the assumption that MSA/tobacco products
+            # should match the real Tobacco-21 regulatory age - but the POS
+            # app's own Age Verification screen only ever enforces an 18+
+            # floor regardless of this field (confirmed live 2026-10-20),
+            # and the product/business team confirmed THAT'S the app's
+            # actual intended limitation, not a bug to work around. Set to
+            # 18 to match what the app actually enforces, consistent with
+            # khub-web-tests' own non-MSA categories.
+            payload["age_threshold"] = 18
 
         resp = self.session.post(
             self.config["url"] + "/tenant/api/v1/catalog/products",

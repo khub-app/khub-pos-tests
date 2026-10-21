@@ -16,12 +16,18 @@ with open("data/test_data.yaml", "r", encoding="utf-8") as f:
 @allure.story("Void Payment (known backend limitation)")
 class TestVoidPayment(POSBaseSetup):
     """
-    KNOWN ISSUE (documented 2026-08-20): confirming Void Payment on a
-    completed cash order consistently returns a "Server Error" from the
-    backend in this environment - reproduced across 3 separate fresh
-    orders and a full emulator cold-boot, ruling out flakiness/stale
-    device state. The confirmation dialog itself and its VOID/CANCEL
-    buttons work correctly; the failure is server-side.
+    KNOWN ISSUE (documented 2026-08-20, re-confirmed 2026-10-19): confirming
+    Void Payment on a completed cash order consistently fails in this
+    environment - reproduced across multiple fresh orders, a full emulator
+    cold-boot, and 3 separate APK builds, ruling out flakiness/stale
+    device state. The confirmation dialog itself works correctly.
+
+    The failure dialog changed in the Oct-19 v1.1.0 build from a generic
+    "Server Error" to a specific "Void Failed" message: "You cannot
+    unapply a payment when the auto apply store credit is turned on." -
+    i.e. this tenant's auto-apply-store-credit setting is what actually
+    blocks voiding, not an opaque backend fault. Still a known config/
+    business-rule limitation to flag, not a bug in this suite.
 
     This test intentionally asserts the CURRENT (broken) behavior rather
     than skipping it, so that the day this is fixed, the test flips to a
@@ -114,13 +120,14 @@ class TestVoidPayment(POSBaseSetup):
             assert self.void_page.is_shown(), "Void Payment confirmation dialog did not open"
             self.void_page.confirm_void()
 
-    @allure.title("Verify Known Server Error")
+    @allure.title("Verify Known Void Failure")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_06_verify_known_error(self):
-        with allure.step("Step 4 (KNOWN ISSUE): backend currently rejects the void with a Server Error"):
+        with allure.step("Step 4 (KNOWN ISSUE): auto-apply store credit setting currently blocks the void"):
             assert self.void_page.is_server_error_shown(), (
-                "Expected the known 'Server Error' failure on Void Payment confirm, but it did not appear - "
-                "the backend issue may be FIXED. If so, update this test to assert successful voiding instead."
+                "Expected the known 'Void Failed' (auto apply store credit) failure on Void Payment confirm, "
+                "but it did not appear - the backend/config issue may be FIXED. If so, update this test to "
+                "assert successful voiding instead."
             )
             self.void_page.dismiss_server_error()
 

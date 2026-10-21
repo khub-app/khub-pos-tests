@@ -114,22 +114,37 @@ class VoidPaymentLocators:
     Locators for the Void Payment confirmation flow (launched from a
     selected order row's action panel).
 
-    KNOWN ISSUE (documented 2026-08-20): confirming VOID here consistently
-    returns a backend "Server Error" in this environment - reproduced
-    across 3 separate fresh orders and a full emulator cold-boot, ruling
-    out flakiness/stale emulator state. The dialog and its buttons work
-    correctly; the failure is server-side. See tests/sales_history/test_void_payment.py.
+    KNOWN ISSUE (documented 2026-08-20, re-confirmed 2026-10-19): confirming
+    VOID here consistently fails in this environment - reproduced across
+    multiple fresh orders, a full emulator cold-boot, and now 3 separate
+    APK builds, ruling out flakiness/stale state. The dialog and its
+    buttons work correctly; the failure is backend/business-rule driven.
+    See tests/sales_history/test_void_payment.py.
 
     Both dialogs here are NATIVE Android AlertDialogs (confirmed via
     android:id/button1, android:id/message resource-ids in a live dump) -
     their buttons have NO content-desc, only text, so ACCESSIBILITY_ID
     cannot match them; these use XPath text matches instead.
+
+    Both dialogs changed in the Oct-19 v1.1.0 build - confirmed live via
+    page-source dump:
+    - Confirm dialog: button text "VOID"/"CANCEL" -> "Yes"/"Cancel" (title/
+      message unchanged). This alone made the confirm tap time out.
+    - Failure dialog: the old generic "Server Error"/"OK" is GONE, replaced
+      by "Void Failed" / "Failed to void the payment. You cannot unapply a
+      payment when the auto apply store credit is turned on. Do you want to
+      retry?" / "Cancel" / "Retry". This is a real improvement - it now
+      names the actual blocker (the tenant's auto-apply-store-credit
+      setting), not just an opaque "Server Error". Still a known backend/
+      config limitation, not a bug in this suite - SERVER_ERROR_* here
+      dismisses via "Cancel" (does NOT retry, so the order stays
+      unvoided - matches test_07_verify_not_voided's expectation).
     """
     CONFIRM_TITLE = (AppiumBy.XPATH, '//*[@text="Void Payment"]')
-    VOID_BUTTON = (AppiumBy.XPATH, '//*[@text="VOID"]')
-    CANCEL_BUTTON = (AppiumBy.XPATH, '//*[@text="CANCEL"]')
-    SERVER_ERROR_TITLE = (AppiumBy.XPATH, '//*[@text="Server Error"]')
-    SERVER_ERROR_OK_BUTTON = (AppiumBy.XPATH, '//*[@text="OK"]')
+    VOID_BUTTON = (AppiumBy.XPATH, '//*[@text="Yes"]')
+    CANCEL_BUTTON = (AppiumBy.XPATH, '//*[@text="Cancel"]')
+    SERVER_ERROR_TITLE = (AppiumBy.XPATH, '//*[@text="Void Failed"]')
+    SERVER_ERROR_OK_BUTTON = (AppiumBy.XPATH, '//*[@text="Cancel"]')
 
 
 class EditOrderLocators:
@@ -146,18 +161,27 @@ class EditOrderLocators:
     native DatePickerDialog), and its "today" cell is reliably matched via
     descriptionContains("today") regardless of the actual date.
 
-    KNOWN ISSUE (documented 2026-08-20): even with a valid date set, Save
-    consistently fails with a native AlertDialog: "This order has no
-    channel id. Cannot save." - confirmed live that orders created via the
-    walk-in cash-sale flow never get a channel_id set, and this screen
-    exposes no Channel field/control to supply one. See
+    KNOWN ISSUE (documented 2026-08-20, re-confirmed 2026-10-19): even with
+    a valid date set, Save consistently fails. The ORIGINAL error ("This
+    order has no channel id. Cannot save.") is GONE as of the Oct-19
+    v1.1.0 build - that specific bug looks fixed - but Save now fails
+    differently: a generic native AlertDialog "Request failed with status
+    code 404", confirmed live. Still broken, just a different failure
+    mode (looks like the save endpoint itself 404s now). See
     tests/sales_history/test_edit_order.py.
     """
     MODAL_TITLE = (AppiumBy.XPATH, '//*[@text="Edit Order"]')
     CANCEL_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Cancel")
     SAVE_BUTTON = (AppiumBy.ACCESSIBILITY_ID, "Save")
 
-    ORDER_DATE_FIELD = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("Select date")')
+    # Was descriptionContains("Select date") - confirmed live 2026-10-19 this
+    # field's content-desc now shows the actual date value instead of a
+    # "Select date" placeholder (e.g. "10/18/2026, <calendar-icon>") -
+    # orders apparently arrive here with a date already populated (not
+    # necessarily today's). Match any date-shaped value instead of literal
+    # placeholder text, so this works whether or not a date is already set.
+    ORDER_DATE_FIELD = (AppiumBy.ANDROID_UIAUTOMATOR,
+                        'new UiSelector().descriptionMatches(".*[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}.*")')
     DATE_PICKER_TODAY_CELL = (AppiumBy.ANDROID_UIAUTOMATOR, 'new UiSelector().descriptionContains("today")')
 
     SALE_PRICE_FIELD = (AppiumBy.XPATH, '//android.widget.EditText[@hint="0.00"]')
@@ -166,5 +190,10 @@ class EditOrderLocators:
     # Native AlertDialogs (see VoidPaymentLocators docstring) - text match,
     # not ACCESSIBILITY_ID.
     MISSING_DATE_ERROR = (AppiumBy.XPATH, '//*[@text="Select order date."]')
-    NO_CHANNEL_ERROR = (AppiumBy.XPATH, '//*[@text="This order has no channel id. Cannot save."]')
+    # Was "This order has no channel id. Cannot save." - that bug is fixed;
+    # Save now fails with this generic error instead (confirmed live
+    # 2026-10-19). Name kept as NO_CHANNEL_ERROR to minimize churn in
+    # callers/tests - it's "the known Save-failure dialog", whichever text
+    # it currently shows.
+    NO_CHANNEL_ERROR = (AppiumBy.XPATH, '//*[@text="Request failed with status code 404"]')
     ERROR_OK_BUTTON = (AppiumBy.XPATH, '//*[@text="OK"]')
